@@ -6,7 +6,7 @@
 		<el-main class="main">
 			<TheFeedList />
 		</el-main>
-		<TheDialog></TheDialog>
+		<TheDialog />
 	</el-container>
 </template>
 <style>

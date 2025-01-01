@@ -25,7 +25,7 @@
 </template>
 
 <script setup>
-import { reactive, ref } from 'vue'
+import { reactive, ref, inject } from 'vue'
 import { useFeedStore } from '@/stores/feed'
 import { useModalStore } from '@/stores/modal'
 const store = useFeedStore()
@@ -33,18 +33,33 @@ const { updateFeedById } = store
 const formRef = ref()
 const { getData, hideModal } = useModalStore()
 
+const axios = inject('axios')
+
 const form = reactive({
 	content: getData.content || '',
 })
 
 const submitForm = (formEl) => {
 	if (!formEl) return
-	formEl.validate((valid) => {
-		if (valid) {
+	formEl.validate(async (valid) => {
+		if (!valid) return
+		try {
+			// const response = await axios({
+			// 	url: `/Publications/${getData.id}`,
+			// 	method: 'PUT',
+			// 	data: {
+			// 		content: form.content,
+			// 	},
+			// })
+			// if (response.status === 200) {
 			updateFeedById(getData.id, form.content)
 			hideModal()
-		} else {
-			console.log('error submit!')
+			// }
+		} catch (err) {
+			ElMessage({
+				message: err,
+				type: 'error',
+			})
 		}
 	})
 }

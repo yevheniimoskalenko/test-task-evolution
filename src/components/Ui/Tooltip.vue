@@ -23,7 +23,7 @@ import { format } from 'date-fns'
 const visible = ref(false)
 defineProps({
 	content: {
-		type: String,
+		type: [String, Number],
 		required: true,
 	},
 })

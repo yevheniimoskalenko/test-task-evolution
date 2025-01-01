@@ -6,7 +6,11 @@ export const useFeedStore = defineStore('feed', () => {
 	const getFeeds = computed(() => feeds.value)
 
 	function setFeeds(data) {
-		feeds.value = [...data, ...feeds.value]
+		feeds.value = [...feeds.value, ...data]
+	}
+
+	function addNewFeed(data) {
+		feeds.value.unshift(data)
 	}
 
 	function removeFeedById(id) {
@@ -31,7 +35,7 @@ export const useFeedStore = defineStore('feed', () => {
 		if (feed) {
 			Object.assign(feed, {
 				content,
-				updatedAt: Date.now(),
+				updatedOn: Date.now(),
 			})
 			ElMessage({
 				message: 'Topic was update',
@@ -46,5 +50,5 @@ export const useFeedStore = defineStore('feed', () => {
 		}
 	}
 
-	return { getFeeds, setFeeds, removeFeedById, updateFeedById }
+	return { getFeeds, setFeeds, removeFeedById, updateFeedById, addNewFeed }
 })

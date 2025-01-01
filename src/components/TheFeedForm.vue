@@ -25,23 +25,36 @@
 </template>
 
 <script setup>
-import { reactive, ref } from 'vue'
+import { reactive, ref, inject } from 'vue'
 import { useFeedStore } from '@/stores/feed'
-const { setFeeds } = useFeedStore()
+const { addNewFeed } = useFeedStore()
 const formRef = ref()
-
+const axios = inject('axios')
 const form = reactive({
 	content: '',
 })
 
 const submitForm = (formEl) => {
 	if (!formEl) return
-	formEl.validate((valid) => {
-		if (valid) {
-			setFeeds([{ id: Date.now(), content: form.content, date: Date.now() }])
+	formEl.validate(async (valid) => {
+		if (!valid) return
+		try {
+			// const response = await axios({
+			// 	url: '/Publications',
+			// 	method: 'POST',
+			// 	data: {
+			// 		content: form.content,
+			// 	},
+			// })
+			// if (response.status === 201) {
+			addNewFeed({ id: Date.now(), content: form.content, createdOn: Date.now() })
 			formRef.value.resetFields()
-		} else {
-			console.log('error submit!')
+			// }
+		} catch (err) {
+			ElMessage({
+				message: err,
+				type: 'error',
+			})
 		}
 	})
 }
