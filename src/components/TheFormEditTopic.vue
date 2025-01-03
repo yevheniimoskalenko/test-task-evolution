@@ -44,17 +44,17 @@ const submitForm = (formEl) => {
 	formEl.validate(async (valid) => {
 		if (!valid) return
 		try {
-			// const response = await axios({
-			// 	url: `/Publications/${getData.id}`,
-			// 	method: 'PUT',
-			// 	data: {
-			// 		content: form.content,
-			// 	},
-			// })
-			// if (response.status === 200) {
-			updateFeedById(getData.id, form.content)
-			hideModal()
-			// }
+			const response = await axios({
+				url: `/Publications/${getData.id}`,
+				method: 'PUT',
+				data: {
+					content: form.content,
+				},
+			})
+			if (response.status === 204) {
+				updateFeedById(getData.id, form.content)
+				hideModal()
+			}
 		} catch (err) {
 			ElMessage({
 				message: err,

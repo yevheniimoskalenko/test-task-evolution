@@ -5,7 +5,7 @@
 	>
 		<div
 			v-infinite-scroll="load"
-			:infinite-scroll-disabled="isLoading"
+			:infinite-scroll-disabled="isLoading || !hasMore"
 			:infinite-scroll-distance="10"
 			class="infinite-list"
 		>
@@ -18,7 +18,7 @@
 						<span> Published on: </span>
 						<time :datetime="format(feed.createdOn, 'yyyy-MM-dd')">{{ useFormatDate(feed.createdOn) }}</time>
 						<UiTooltip
-							v-if="feed?.updatedOn"
+							v-if="feed?.updatedOn !== feed.createdOn"
 							:content="feed.updatedOn"
 						/>
 					</div>
@@ -48,7 +48,7 @@
 </template>
 
 <script setup>
-import { inject, computed, ref } from 'vue'
+import { inject, ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import { format } from 'date-fns'
 import { useFeedStore } from '@/stores/feed'
@@ -62,28 +62,46 @@ const { showModal } = useModalStore()
 const { setFeeds, removeFeedById } = store
 const { getFeeds } = storeToRefs(store)
 const axios = inject('axios')
-
-const page = ref(1)
 const isLoading = ref(false)
+const hasMore = ref(true) // Контролює, чи є ще дані для завантаження
+const cursor = ref(null)
+const limit = 10
 
 const load = async () => {
-	if (isLoading.value) return
+	if (isLoading.value || !hasMore.value) return // Зупиняємо, якщо вже завантажуємо або більше даних немає
+
 	const loading = ElLoading.service({
 		lock: true,
 		text: 'Loading',
 		background: 'rgba(0, 0, 0, 0.7)',
 	})
+
+	let url = `/Publications?order=Desc&take=${limit}`
+	if (cursor.value) {
+		url += `&cursor=${cursor.value}`
+	}
+
 	try {
-		// const response = await axios(`/Publications?order=Desc`)
-		const response = await axios(`/posts?_page=${page.value}&_limit=10`)
+		const response = await axios(url)
+
 		if (response.status === 200) {
-			setFeeds(response.data.map((feed) => ({ id: feed.id, content: feed.title, createdOn: Date.now() })))
-			loading.close()
-			page.value++
+			// Якщо заголовок `x-cursor` відсутній, припиняємо завантаження
+			if (response.headers['x-cursor']) {
+				cursor.value = response.headers['x-cursor']
+			} else {
+				hasMore.value = false // Більше немає даних
+				ElMessage({
+					message: `No more records`,
+					type: 'info',
+				})
+			}
+
+			// Додаємо нові дані до списку
+			setFeeds(response.data)
 		}
 	} catch (err) {
 		ElMessage({
-			message: err,
+			message: `Error load: ${err.message || err}`,
 			type: 'error',
 		})
 	} finally {
@@ -99,8 +117,11 @@ const remove = async (id) => {
 			cancelButtonText: 'Cancel',
 			type: 'warning',
 		})
-			.then(() => {
-				removeFeedById(id)
+			.then(async () => {
+				const response = await axios.delete(`/Publications/${id}`)
+				if (response.status === 204) {
+					removeFeedById(id)
+				}
 			})
 			.catch(() => {
 				ElMessage({
@@ -135,6 +156,14 @@ article {
 	align-items: center;
 	flex-wrap: wrap;
 	column-gap: 20px;
+}
+.date time {
+	font-size: 14px;
+	color: #888;
+}
+.noMore {
+	text-align: center;
+	margin: 20px;
 }
 .feed-list-enter-active,
 .feed-list-leave-active {

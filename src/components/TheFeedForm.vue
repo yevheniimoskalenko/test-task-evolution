@@ -39,17 +39,22 @@ const submitForm = (formEl) => {
 	formEl.validate(async (valid) => {
 		if (!valid) return
 		try {
-			// const response = await axios({
-			// 	url: '/Publications',
-			// 	method: 'POST',
-			// 	data: {
-			// 		content: form.content,
-			// 	},
-			// })
-			// if (response.status === 201) {
-			addNewFeed({ id: Date.now(), content: form.content, createdOn: Date.now() })
-			formRef.value.resetFields()
-			// }
+			const response = await axios({
+				url: '/Publications',
+				method: 'POST',
+				data: {
+					content: form.content,
+				},
+			})
+			if (response.status === 201) {
+				addNewFeed(response.data)
+				formRef.value.resetFields()
+			} else {
+				ElMessage({
+					message: response.data,
+					type: 'error',
+				})
+			}
 		} catch (err) {
 			ElMessage({
 				message: err,
